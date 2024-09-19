@@ -1,0 +1,107 @@
+
+
+sudo apt update
+sudo apt install nginx -y
+
+
+
+sudo apt install certbot python3-certbot-nginx -y
+
+sudo nano /etc/nginx/sites-available/dev.example.com
+            # edit file
+
+sudo ln -s /etc/nginx/sites-available/dev.example.com /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/prod.example.com /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+
+sudo certbot --nginx -d dev.example.com
+sudo certbot --nginx -d prod.example.com
+sudo certbot renew --quite
+
+# sample nginx conf file
+--------------------------------------
+server {
+    listen 80;
+    server_name dev.dijicamp.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name dev.example.com;
+
+    ssl_certificate /etc/letsencrypt/live/dev.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/dev.example.com/privkey.pem;
+
+    root /var/www/dev.example.com;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+----------------------------------------
+sudo ufw allow 'Nginx Full'
+sudo systemctl status certbot.timer
+
+
+
+
+
+$ apt-get update
+$ sudo apt-get install certbot
+$ apt-get install python3-certbot-nginx
+
+
+$ nginx -t && nginx -s reload
+$ sudo certbot --nginx -d example.com -d www.example.com
+
+$ crontab -e
+
+0 12 * * * /usr/bin/certbot renew --quiet
+
+# if not auto create below file you must run commands to do it
+sudo mkdir -p /etc/letsencrypt
+sudo wget https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf -O /etc/letsencrypt/options-ssl-nginx.conf
+
+sudo wget https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem -O /etc/letsencrypt/ssl-dhparams.pem
+
+
+# sudo certbot --nginx -d dev.example.com  ve  sudo nginx -t   # if errros happens for  ssl to donamin
+
+sudo nginx -t
+sudo systemctl reload nginx  # nginx.service is not active, cannot reload.  if message like this.. you must restart
+
+sudo systemctl restart nginx
+
+sudo certbot certonly --standalone -d dev.example.com
+ # after succeded you must update nginx file for ssl
+ssl_certificate /etc/letsencrypt/live/dev.example.com/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/dev.example.com/privkey.pem;
+sudo nginx -t
+sudo systemctl restart nginx
+
+
+
+
+
+# to renew ssl .. add line to crontab 
+
+0 0 1 * * /usr/bin/certbot renew --quiet
+
+
+# or a script file add to crontab
+
+#  create a file /alluserfiles/renew_ssl.sh
+---------------------------
+#!/bin/bash
+
+sudo systemctl stop nginx
+/usr/bin/certbot renew --quiet
+sudo systemctl start nginx
+----------------------------
+
+sudo chmod 777 renew_ssl.sh
+
+
